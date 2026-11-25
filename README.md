@@ -39,13 +39,14 @@ In late 2026, core PHP vulnerabilities underscored how quickly critical flaws ca
 #### 2. Install & Configure Synology DNS Server
 1. Open **Package Center**, search for **DNS Server**, and install it.
 2. Launch **DNS Server** and ensure the DNS service is enabled.
-3. Go to **Zones** and create a **Primary zone** (**Forward zone**) for `<yourname>.synology.me`, pointing to your NAS's static LAN IP (`192.168.x.y`). Disable **Limit zone transfer** and **Limit zone update** unless you specifically need them.
-4. Go to **Resolution**, enable resolution service, configure **Enable forwarders** (such as `1.1.1.1` and `8.8.8.8`), and if using **Limit source IP service**, ensure your allowed IP/subnet mask (for example, `192.168.x.y` / `255.255.0.0` or your local subnet—plus Tailscale's range if queried over VPN) does not block legitimate clients.
+3. Go to **Zones** and create a **Primary zone** (**Forward zone**) for `<yourname>.synology.me`. Then select the zone, click **Edit > Resource record > Create**, choose **A**, leave **Name** blank (so it targets `<yourname>.synology.me` itself), and enter `192.168.x.y` as the **IP address**. Disable **Limit zone transfer** and **Limit zone update** unless you specifically need them.
+4. Go to **Resolution**, enable resolution service, configure **Enable forwarders** (such as `1.1.1.1` and `8.8.8.8`), and if you enable **Limit source IP service**, make sure to include both your local LAN subnet (e.g., `192.168.1.0/24` or your chosen LAN subnet) and Tailscale's CGNAT range (`100.64.0.0/10`)—otherwise external Tailscale devices won't be able to query your NAS for DNS.
 
 #### 3. Redirect Router DHCP / Internal DNS to Synology
 1. Log in to your **router's admin panel**.
 2. In your **LAN / DHCP settings**, set the primary **DNS Server** handed out to internal clients to `192.168.x.y` (your Synology NAS).
-3. Reconnect your test device (or renew its DHCP lease) so it picks up the new DNS server.
+3. **Avoid common subnet collisions:** If your home LAN uses a very common subnet like `192.168.1.0/24`, consider switching your router's LAN subnet to a less common range (such as `192.168.50.x` or `10.10.20.x`). Because this guide routes `192.168.x.y/32` (or your NAS's LAN IP) over Tailscale, an uncommon subnet reduces the chance of IP conflicts when connecting from external Wi-Fi networks (hotels, cafes, offices, or friends' networks). *(If you change your NAS's LAN IP, update your Synology DNS A record and Tailscale `/32` route to match.)*
+4. Reconnect your test device (or renew its DHCP lease) so it picks up the new DNS server and subnet settings.
 
 #### 4. Test Internal DNS & HTTPS Access
 1. On a device connected to your internal LAN, open `https://<yourname>.synology.me:5001` (or your service URL) in a **web browser** and confirm it loads cleanly with a valid certificate.
